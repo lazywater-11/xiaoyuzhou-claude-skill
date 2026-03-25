@@ -1,54 +1,59 @@
 ---
 name: xiaoyuzhou
-description: "下载小宇宙播客，进行本地语音转文字，提取总结并保存到 Obsidian。只需传入小宇宙播客链接。"
+description: 下载小宇宙播客，进行语音转文字，提取总结并保存到 Obsidian。只需传入小宇宙播客链接。
 ---
 
-# 小宇宙播客下载与总结流程
+# 小宇宙播客提取与总结 (Xiaoyuzhou to Obsidian)
 
-**任务目标：**
-当用户输入 `/xiaoyuzhou [小宇宙链接]` 时，你需要执行 Python 脚本来下载该播客的音频，利用本地 `mlx-whisper` 模型提取逐字稿文本，然后将逐字稿进行深度总结，最后将结果自动写入到用户的 Obsidian 笔记库中。
+当用户输入 `/xiaoyuzhou [小宇宙链接]` 时，你需要作为一个极其自律的知识沉淀助手，严格按照以下规范执行。
 
-**执行步骤：**
+## 🎯 目标文件 (Target Files)
+1. **执行脚本**：`~/.claude/scripts/xiaoyuzhou_stt.py`
+2. **中间产物**：脚本生成的 `/tmp/xiaoyuzhou_stt/transcript.txt` 逐字稿文件
+3. **最终输出**：`/Users/zhifengma/obsidian-lifeos/Podcasts/[播客标题].md`
 
-1. **执行底层 Python 脚本进行下载和转录：**
-   使用 `Bash` 工具运行以下命令：
-   ```bash
-   python3 ~/.claude/scripts/xiaoyuzhou_stt.py "$ARGUMENTS"
-   ```
-   *注意：这一步可能需要几分钟时间（取决于播客长度）。等待脚本运行完毕，并提取其输出中包含的 JSON Metadata（包含了 `title`, `audio_url` 以及 `transcript_path`）。*
+## 📋 执行检查清单 (Execution Checklist)
+- [ ] **步骤 1：触发转录**
+      使用 `Bash` 运行命令：`python3 ~/.claude/scripts/xiaoyuzhou_stt.py "$ARGUMENTS"`。等待运行完毕并提取其输出的 JSON Metadata（包含 `title`, `audio_url`, `transcript_path`）。
+- [ ] **步骤 2：读取逐字稿**
+      使用 `Read` 工具读取 Metadata 指示的逐字稿路径。
+- [ ] **步骤 3：执行提炼与总结**
+      运用 LLM 能力，基于全文撰写高质量笔记（严格遵循下方的“文案规范”）。如果能区分不同嘉宾视角，请尽量保留。
+- [ ] **步骤 4：格式化并写入 Obsidian**
+      使用 `Write` 工具，将组装好的 Markdown 内容（包含 YAML 和正文）写入最终输出路径。如果文件名含特殊字符，请用短横线替换。
+- [ ] **步骤 5：完成汇报**
+      向用户反馈操作成功，并输出生成的 Obsidian 文件路径。
 
-2. **读取转录结果：**
-   使用 `Read` 工具读取上一步 JSON Metadata 中指定的 `transcript_path` 路径里的逐字稿文件（通常是 `/tmp/xiaoyuzhou_stt/transcript.txt`）。
+## ✍️ 代码/文案规范 (Standards & Formatting)
 
-3. **提炼与总结：**
-   结合你的大语言模型能力，基于这篇完整的播客逐字稿，撰写一份高质量、结构清晰的笔记总结。**你必须深刻理解：这不是你为自己写的总结，而是为了让用户（我）看一眼就能记住并吸收其价值的知识沉淀。**
-   如果阿里的逐字稿中能够区分不同发言人（如 Speaker 1, Speaker 2），请尽量按不同嘉宾的视角来提炼；如果无法区分，则从整体脉络出发。
+**最高原则：** 这不是为你自己写的摘要，而是为用户打造的、看一眼就能吸收核心价值的知识库沉淀。
 
-   你的总结必须严格按照以下结构输出：
+最终写入的 Markdown 必须严格按照以下格式组织：
 
-   - 📖 **前置导览 (Executive Summary)**
-     用一段话作为摘要，介绍这期播客的核心背景、探讨了什么核心议题，以及读者（我）能从中获得什么样的启发或认知改变。
+```yaml
+---
+tags: [播客, 小宇宙]
+source: {原始播客链接}
+audio: {Metadata中提取的 audio_url}
+date: "{当前的 YYYY-MM-DD 日期}"
+---
+```
 
-   - 💡 **核心观点与论据支撑 (Key Insights & Arguments)**
-     （这是最重要的部分）使用清晰的层级结构（如二级标题+要点），提炼出这期播客中最有价值的 3-5 个核心观点。
-     **强制要求**：每个核心观点之下，**必须紧跟“论据支撑”**。不能只是一句干瘪的结论，必须用播客中讲到的具体例子、数据、逻辑推演或现实故事来支撑这个观点。我要看到他们是“为什么”得出这个结论的。
+# 🎙️ {播客标题}
 
-   - 🗣️ **精彩语录 (Notable Quotes)**
-     从逐字稿中提取 2-3 句最原汁原味、最能引发共鸣或最具洞察力的金句（保留原话的力度和温度）。
+## 📖 前置导览 (Executive Summary)
+用一段话作为摘要，介绍这期播客的核心背景、探讨了什么核心议题，以及读者（我）能从中获得什么样的启发或认知改变。
 
-4. **格式化并保存到 Obsidian：**
-   使用 `Write` 工具，将这篇笔记以 Markdown 格式保存到 `/Users/zhifengma/obsidian-lifeos/Podcasts/` 目录下（如果目录不存在可以先用 Bash `mkdir -p` 创建）。
-   文件命名格式为：`[播客标题].md`（将标题中的特殊符号替换为短横线避免文件路径报错）。
-   文件开头必须包含以下 YAML Frontmatter：
-   ```yaml
-   ---
-   tags: [播客, 小宇宙]
-   source: {原始播客链接}
-   audio: {Metadata中提取的 audio_url}
-   date: "{当前的 YYYY-MM-DD 日期}"
-   ---
-   ```
-   然后附上第 3 步中你写好的优质总结笔记，并在最后附上原始逐字稿（放进一个折叠块 `<details><summary>展开查看原始逐字稿</summary>...内容...</details>` 中以供备查）。
+## 💡 核心观点与论据支撑 (Key Insights & Arguments)
+提炼出这期播客中最有价值的 3-5 个核心观点（使用层级结构）。
+**⚠️强制要求**：每个核心观点之下，**必须紧跟“论据支撑”**。不能只是一句干瘪的结论，必须用播客中讲到的具体例子、数据、逻辑推演或现实故事来支撑这个观点。我要看到他们是“为什么”得出这个结论的。
 
-5. **完成反馈：**
-   向用户反馈操作成功，并输出 Obsidian 的文件路径。
+## 🗣️ 精彩语录 (Notable Quotes)
+从逐字稿中提取 2-3 句最原汁原味、最能引发共鸣或最具洞察力的金句（保留原话的力度和温度），使用 `> ` 引用格式。
+
+---
+
+<details>
+<summary>展开查看原始逐字稿位置</summary>
+*原始逐字稿已由 Claude 自动提取并保存在本地临时目录：`/tmp/xiaoyuzhou_stt/transcript.txt`*
+</details>
